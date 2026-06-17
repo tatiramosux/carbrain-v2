@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Paytone+One&family=Nunito+Sans:wght@400;600;700;900&display=swap');
+
+:root {
+  --font-display: "Paytone One", "Arial Black", sans-serif;
+  --font-body: "Nunito Sans", system-ui, sans-serif;
+
+  /* Brand palette */
+  --color-brand-500: #002147;
+  --color-brand-400: #2e5478;
+  --color-brand-300: #deeeff;
+  --color-accent-500: #00bbea;
+  --color-accent-400: #00c6ef;
+  --color-accent-300: #8eebff;
+  --color-accent-200: #c1f4ff;
+  --color-lime-500: #cbff00;
+  --color-lime-200: #e0ff80;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-brand-500);
+  color: white;
+  margin: 0;
+}
+
+button, input {
+  font: inherit;
+}
+
+button {
+  font-weight: 900; /* Nunito Sans Black */
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Subtle grid overlay used on hero */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(0, 33, 71, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 33, 71, 0.07) 1px, transparent 1px);
+  background-size: 38px 38px;
+}
+
+.hero-glow-cyan {
+  background: radial-gradient(circle, rgba(0, 187, 234, 0.16) 0%, transparent 68%);
+}
+
+.hero-glow-lime {
+  background: radial-gradient(circle, rgba(203, 255, 0, 0.10) 0%, transparent 70%);
+}
+
+/* ── shadcn / tw-animate-css tokens (Tailwind 3 compat) ───────────────────── */
+:root {
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+}
+
+.dark {
+  --card: oklch(0.145 0 0);
+  --popover: oklch(0.145 0 0);
+  --primary: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+/* TextGlitch span transition override */
+.text-glitch-span {
+  transition: clip-path 400ms ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0A1628;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e3a5f;
+  border-radius: 3px;
+}
