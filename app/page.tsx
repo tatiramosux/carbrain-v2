@@ -36,7 +36,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col bg-[#002147]">
+    <main className="min-h-screen flex flex-col" style={{ backgroundColor: '#041421', backgroundImage: 'linear-gradient(40deg, rgba(4, 20, 33, 1) 0%, rgba(0, 39, 72, 1) 50%, rgba(0, 63, 123, 1) 100%)' }}>
       <Navbar onGetOffer={() => handleGetOffer()} />
 
       {showForm ? (

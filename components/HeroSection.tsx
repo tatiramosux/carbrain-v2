@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight, faStar, faCheck, faCircleInfo } from "@fortawesome/free-solid-svg-icons";
-import { AnimatedAuroraBackground } from "./ui/animated-aurora-background";
 import { cn } from "@/lib/utils";
 import { Typewriter } from "@/components/ui/typewriter-text";
 
@@ -182,7 +181,7 @@ export default function HeroSection({ onGetOffer }: HeroSectionProps) {
 
   return (
     <>
-      <AnimatedAuroraBackground className="font-nunito">
+      <section className="relative overflow-hidden font-nunito bg-transparent">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[110px] pb-[80px]">
           <div className="flex flex-1 flex-col lg:flex-row items-center lg:items-center justify-center gap-8 lg:gap-16 min-h-[600px]">
 
@@ -549,7 +548,7 @@ export default function HeroSection({ onGetOffer }: HeroSectionProps) {
             </div>
           </div>
         </div>
-      </AnimatedAuroraBackground>
+      </section>
     </>
   );
 }

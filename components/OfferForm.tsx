@@ -14,7 +14,6 @@ import {
   faCar,
 } from "@fortawesome/free-solid-svg-icons";
 import { gsap } from "gsap";
-import { AnimatedAuroraBackground } from "./ui/animated-aurora-background";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1668,7 +1667,7 @@ export default function OfferForm({
     currentStep.id !== "calculating" && currentStep.id !== "accepted" && currentStep.id !== "offer";
 
   return (
-    <AnimatedAuroraBackground className="flex-1 font-nunito">
+    <section className="flex-1 relative overflow-hidden font-nunito bg-transparent">
 
       <div className="relative max-w-[1080px] mx-auto px-4 sm:px-6 lg:px-8 pt-[100px] pb-10">
         <div className="flex items-center justify-between mb-6">
@@ -1840,6 +1839,6 @@ export default function OfferForm({
           </div>
         </div>
       )}
-    </AnimatedAuroraBackground>
+    </section>
   );
 }
