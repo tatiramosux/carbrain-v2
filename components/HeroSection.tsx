@@ -169,6 +169,7 @@ export default function HeroSection({ onGetOffer }: HeroSectionProps) {
   };
 
   const handleButtonClick = () => {
+    console.log("Hero button clicked! activeTab:", activeTab, "vin:", vin);
     onGetOffer({
       vin: activeTab === "vin" ? vin : "",
       year: activeTab === "ymm" ? selectedYear : "",
@@ -539,6 +540,7 @@ export default function HeroSection({ onGetOffer }: HeroSectionProps) {
 
                 {/* Get and Offer CTA Button */}
                 <button
+                  type="button"
                   onClick={handleButtonClick}
                   className="w-full bg-[#00bbea] hover:bg-[#0096bd] text-[#002147] font-extrabold py-4 rounded-full
                            flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] text-base"
