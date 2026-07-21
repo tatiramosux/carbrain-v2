@@ -56,20 +56,24 @@ export default function Navbar({ onGetOffer }: NavbarProps) {
 
           {/* ── Right: CTA buttons ── */}
           <div className="flex items-center gap-2">
-            {/* Chat Now — text on all viewports */}
+            {/* Chat Now — icon on mobile, text + icon on desktop */}
             <button
-              className="flex items-center gap-2 font-semibold text-[#00bbea] border border-[#00bbea] rounded-full
-                         px-4 py-1.5 hover:text-[#0096bd] hover:border-[#0096bd] transition-colors text-sm"
+              className="flex items-center justify-center gap-2 font-semibold text-[#00bbea] border border-[#00bbea] rounded-full
+                         w-9 h-9 md:w-auto md:h-auto md:px-4 md:py-1.5 hover:text-[#0096bd] hover:border-[#0096bd] transition-colors text-sm"
+              aria-label="Chat Now"
             >
-              <span>Chat Now</span>
+              <FontAwesomeIcon icon={faCommentDots} className="w-4 h-4" />
+              <span className="hidden md:inline">Chat Now</span>
             </button>
 
-            {/* Sign In — text on all viewports */}
+            {/* Sign In — icon on mobile, text + icon on desktop */}
             <button
-              className="flex items-center gap-2 font-semibold text-white border border-white/30 rounded-full
-                         px-4 py-1.5 hover:bg-white/10 transition-colors text-sm"
+              className="flex items-center justify-center gap-2 font-semibold text-white border border-white/30 rounded-full
+                         w-9 h-9 md:w-auto md:h-auto md:px-4 md:py-1.5 hover:bg-white/10 transition-colors text-sm"
+              aria-label="Sign In"
             >
-              <span>Sign In</span>
+              <FontAwesomeIcon icon={faCircleUser} className="w-4 h-4" />
+              <span className="hidden md:inline">Sign In</span>
             </button>
           </div>
 

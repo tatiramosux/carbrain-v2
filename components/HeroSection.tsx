@@ -183,7 +183,7 @@ export default function HeroSection({ onGetOffer }: HeroSectionProps) {
     <>
       <section className="relative overflow-hidden font-nunito bg-gradient-to-br from-[#081729] via-[#05224c] to-[#023579]">
         {/* Smooth gradient background matching the isolated background reference image */}
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[180px] pb-[140px]">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[110px] pb-[80px]">
           <div className="flex flex-1 flex-col lg:flex-row items-center lg:items-center justify-center gap-8 lg:gap-16 min-h-[600px]">
 
             {/* ── Left: hero copy ── */}
