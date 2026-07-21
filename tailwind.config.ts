@@ -37,6 +37,24 @@ const config: Config = {
         nunito:  ["Nunito Sans", "system-ui", "sans-serif"],
         paytone: ["Paytone One", "Arial Black", "sans-serif"],
       },
+      keyframes: {
+        aurora: {
+          "0%": { transform: "translate(0, 0) scale(1)" },
+          "33%": { transform: "translate(5%, -5%) scale(1.05)" },
+          "66%": { transform: "translate(-5%, 5%) scale(0.95)" },
+          "100%": { transform: "translate(0, 0) scale(1)" },
+        },
+        "aurora-reverse": {
+          "0%": { transform: "translate(0, 0) scale(1)" },
+          "33%": { transform: "translate(-5%, 5%) scale(0.95)" },
+          "66%": { transform: "translate(5%, -5%) scale(1.05)" },
+          "100%": { transform: "translate(0, 0) scale(1)" },
+        },
+      },
+      animation: {
+        aurora: "aurora 15s ease-in-out infinite",
+        "aurora-reverse": "aurora-reverse 20s ease-in-out infinite",
+      },
     },
   },
   plugins: [],
