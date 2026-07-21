@@ -543,7 +543,7 @@ export default function HeroSection({ onGetOffer }: HeroSectionProps) {
                   className="w-full bg-[#00bbea] hover:bg-[#0096bd] text-[#002147] font-extrabold py-4 rounded-full
                            flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] text-base"
                 >
-                  Get and Offer
+                  Get an Offer
                   <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
                 </button>
               </div>
