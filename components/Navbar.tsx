@@ -14,7 +14,7 @@ export default function Navbar({ onGetOffer }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="bg-[#002147] border-b border-white/10 font-nunito relative z-50">
+    <nav className="bg-[#002147] border-b border-white/10 font-nunito fixed w-full top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
@@ -56,22 +56,20 @@ export default function Navbar({ onGetOffer }: NavbarProps) {
 
           {/* ── Right: CTA buttons ── */}
           <div className="flex items-center gap-2">
-            {/* Chat Now — icon + text on desktop, icon only on mobile */}
+            {/* Chat Now — text on all viewports */}
             <button
-              className="flex items-center gap-2 font-semibold text-white border border-[#00bbea] rounded-full
-                         px-4 py-1.5 hover:bg-[#00bbea]/10 transition-colors text-sm"
+              className="flex items-center gap-2 font-semibold text-[#00bbea] border border-[#00bbea] rounded-full
+                         px-4 py-1.5 hover:text-[#0096bd] hover:border-[#0096bd] transition-colors text-sm"
             >
-              <FontAwesomeIcon icon={faCommentDots} className="w-4 h-4 text-[#00bbea] flex-shrink-0" />
-              <span className="hidden md:inline">Chat Now</span>
+              <span>Chat Now</span>
             </button>
 
-            {/* Sign In — person icon + text on desktop, icon only on mobile */}
+            {/* Sign In — text on all viewports */}
             <button
               className="flex items-center gap-2 font-semibold text-white border border-white/30 rounded-full
                          px-4 py-1.5 hover:bg-white/10 transition-colors text-sm"
             >
-              <FontAwesomeIcon icon={faCircleUser} className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline">Sign In</span>
+              <span>Sign In</span>
             </button>
           </div>
 

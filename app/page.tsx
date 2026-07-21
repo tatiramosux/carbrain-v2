@@ -8,13 +8,29 @@ import OfferForm from "@/components/OfferForm";
 
 export default function Home() {
   const [showForm, setShowForm] = useState(false);
-  const [initialZip, setInitialZip] = useState("");
   const [initialVin, setInitialVin] = useState("");
-  const [initialTab, setInitialTab] = useState<"zip" | "vin">("zip");
+  const [initialYear, setInitialYear] = useState("");
+  const [initialMake, setInitialMake] = useState("");
+  const [initialModel, setInitialModel] = useState("");
+  const [initialTab, setInitialTab] = useState<"vin" | "ymm">("vin");
 
-  function handleGetOffer(zip = "", vin = "", tab: "zip" | "vin" = "zip") {
-    setInitialZip(zip);
+  function handleGetOffer({
+    vin = "",
+    year = "",
+    make = "",
+    model = "",
+    tab = "vin",
+  }: {
+    vin?: string;
+    year?: string;
+    make?: string;
+    model?: string;
+    tab?: "vin" | "ymm";
+  } = {}) {
     setInitialVin(vin);
+    setInitialYear(year);
+    setInitialMake(make);
+    setInitialModel(model);
     setInitialTab(tab);
     setShowForm(true);
   }
@@ -26,8 +42,10 @@ export default function Home() {
       {showForm ? (
         <OfferForm
           onClose={() => setShowForm(false)}
-          initialZip={initialZip}
           initialVin={initialVin}
+          initialYear={initialYear}
+          initialMake={initialMake}
+          initialModel={initialModel}
           initialTab={initialTab}
         />
       ) : (
