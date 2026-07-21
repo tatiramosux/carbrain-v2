@@ -280,8 +280,108 @@ export default function OfferForm({
       ? "ymm"
       : (initialTab === "ymm" ? "ymm" : "vin"),
   });
-  const [trimDropdownOpen, setTrimDropdownOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<"year" | "make" | "model" | null>(null);
+
+  const [openDropdown, setOpenDropdown] = useState<"year" | "make" | "model" | "trim" | null>(null);
+  const [yearSearch, setYearSearch] = useState("");
+  const [makeSearch, setMakeSearch] = useState("");
+  const [modelSearch, setModelSearch] = useState("");
+  const [trimSearch, setTrimSearch] = useState("");
+  const [activeOptionIndex, setActiveOptionIndex] = useState(-1);
+
+  // Sync inputs with selected states
+  useEffect(() => {
+    setYearSearch(form.year);
+  }, [form.year]);
+
+  useEffect(() => {
+    setMakeSearch(form.make);
+  }, [form.make]);
+
+  useEffect(() => {
+    setModelSearch(form.model);
+  }, [form.model]);
+
+  useEffect(() => {
+    setTrimSearch(form.trim);
+  }, [form.trim]);
+
+  const handleBlur = (field: "year" | "make" | "model" | "trim") => {
+    setTimeout(() => {
+      setOpenDropdown((current) => (current === field ? null : current));
+      if (field === "year") setYearSearch(form.year);
+      else if (field === "make") setMakeSearch(form.make);
+      else if (field === "model") setModelSearch(form.model);
+      else if (field === "trim") setTrimSearch(form.trim);
+    }, 200);
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    field: "year" | "make" | "model" | "trim",
+    options: string[],
+    onSelect: (val: string) => void
+  ) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveOptionIndex((prev) => (prev + 1 < options.length ? prev + 1 : prev));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveOptionIndex((prev) => (prev - 1 >= 0 ? prev - 1 : prev));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeOptionIndex >= 0 && activeOptionIndex < options.length) {
+        onSelect(options[activeOptionIndex]);
+        setOpenDropdown(null);
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setOpenDropdown(null);
+    }
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest(".custom-dropdown")) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  const MAKES = Object.keys(VEHICLES_DATA);
+  const MODELS = form.make && VEHICLES_DATA[form.make] ? VEHICLES_DATA[form.make] : [];
+
+  const filteredYears = (yearSearch === form.year || !yearSearch)
+    ? YEARS
+    : YEARS.filter(y => y.includes(yearSearch));
+
+  const filteredMakes = (makeSearch === form.make || !makeSearch)
+    ? MAKES
+    : MAKES.filter(m => m.toLowerCase().includes(makeSearch.toLowerCase()));
+
+  const filteredModels = (modelSearch === form.model || !modelSearch)
+    ? MODELS
+    : MODELS.filter(m => m.toLowerCase().includes(modelSearch.toLowerCase()));
+
+  const TRIMS = ["Base", "LE", "SE", "XLE", "Sport", "Limited", "LX", "EX", "Touring"];
+  const filteredTrims = (trimSearch === form.trim || !trimSearch)
+    ? TRIMS
+    : TRIMS.filter(t => t.toLowerCase().includes(trimSearch.toLowerCase()));
+
+  const handleMakeChange = (make: string) => {
+    update("make", make);
+    update("model", ""); // Reset model when make changes
+  };
+
+  const [expandedSections, setExpandedSections] = useState<Record<Section, boolean>>({
+    Vehicle: true,
+    Ownership: false,
+    Conditions: false,
+    "Get an Offer": false,
+  });
+
   const currentStep = STEPS[stepIndex];
   const [calcStage, setCalcStage] = useState(1);
   const [mileageWarning, setMileageWarning] = useState<'greater' | 'lower' | null>(null);
@@ -303,7 +403,16 @@ export default function OfferForm({
     }
   }, [currentStep.id]);
 
+  useEffect(() => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [currentStep.section]: true,
+    }));
+  }, [currentStep.section]);
 
+  function toggleSection(sec: Section) {
+    setExpandedSections((prev) => ({ ...prev, [sec]: !prev[sec] }));
+  }
 
   const update = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     setForm((prev) => {
@@ -327,7 +436,123 @@ export default function OfferForm({
   })();
 
   // ── Sidebar ──────────────────────────────────────────────────────────────────
-  // Sidebar has been replaced by the top horizontal stepper.
+
+  const sidebar = (
+    <aside className="hidden md:flex w-72 flex-shrink-0 bg-[#f7fafc] border-r border-[#e1eaf0] flex-col font-nunito rounded-l-2xl overflow-hidden self-stretch">
+      {/* Fixed header — pinned height matches stepper height so borders align */}
+      <div className="flex-shrink-0 h-[101px] md:h-[110px] flex flex-col justify-center px-5 border-b border-[#e1eaf0]">
+        <h2 className="text-base font-black text-[#002147] mb-1">
+          Get an Instant Offer
+        </h2>
+        <p className="text-xs text-gray-500 leading-relaxed">
+          Progress is saved automatically.<br />
+          Click any question to navigate directly.
+        </p>
+      </div>
+
+      {/* Scrollable accordion list */}
+      <div className="flex-1 overflow-y-auto scroll-smooth scrollbar-light px-5 py-3">
+        <div className="space-y-1">
+          {SIDEBAR_SECTIONS.map(({ section, items }) => {
+            const sectionStatus = getSectionStatus(section, currentStep.id);
+            const isCurrentSection = sectionStatus === "active";
+            const isCompletedSection = sectionStatus === "completed";
+            const isExpanded = expandedSections[section];
+
+            return (
+              <div key={section}>
+                {/* Section Header */}
+                <button
+                  type="button"
+                  onClick={() => toggleSection(section)}
+                  className={cn(
+                    "w-full px-4 py-2.5 rounded-2xl flex items-center justify-between font-black text-sm transition-all text-left",
+                    isCurrentSection
+                      ? "bg-[#e3f4fc] text-[#00bbea] shadow-xs"
+                      : isCompletedSection
+                      ? "text-[#6b7a8d] hover:bg-gray-100/60"
+                      : "text-[#002147]/50 hover:text-[#002147]/70 hover:bg-gray-100/60"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    {isCompletedSection ? (
+                      <svg className="w-3.5 h-3.5 text-[#00bbea] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <div className={cn(
+                        "w-3.5 h-3.5 rounded-full border-2 flex-shrink-0",
+                        isCurrentSection ? "border-[#00bbea]" : "border-gray-300"
+                      )} />
+                    )}
+                    <span>{section}</span>
+                  </div>
+                  <FontAwesomeIcon
+                    icon={isExpanded ? faChevronUp : faChevronDown}
+                    className={cn("w-3 h-3", isCurrentSection ? "text-[#00bbea]" : "text-gray-400")}
+                  />
+                </button>
+
+                {/* Sub-item List */}
+                {isExpanded && (
+                  <div className="pl-5 pr-2 pb-1 mt-0.5 space-y-0.5">
+                    {items.map((sub, idx) => {
+                      const isSubActive = currentStep.id === sub.stepId;
+                      const subStepIdx = STEPS.findIndex((s) => s.id === sub.stepId);
+                      const currentIdx = STEPS.findIndex((s) => s.id === currentStep.id);
+                      const isCompleted = subStepIdx < currentIdx;
+
+                      return (
+                        <div
+                          key={`${sub.label}-${idx}`}
+                          onClick={() => setStepIndex(subStepIdx)}
+                          className={cn(
+                            "flex items-center gap-2.5 py-1.5 px-2 rounded-lg cursor-pointer transition-all",
+                            isSubActive
+                              ? "bg-[#e3f4fc]"
+                              : isCompleted
+                              ? "hover:bg-gray-100/60"
+                              : "hover:bg-gray-100/40"
+                          )}
+                        >
+                          <div className={cn(
+                            "w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center",
+                            isSubActive
+                              ? "border-[#00bbea] bg-[#00bbea]"
+                              : isCompleted
+                              ? "border-[#00bbea] bg-white"
+                              : "border-gray-200 bg-white"
+                          )}>
+                            {isCompleted && (
+                              <svg className="w-2 h-2" fill="none" stroke="#00bbea" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className={cn(
+                            "text-xs",
+                            isSubActive
+                              ? "font-black text-[#002147]"
+                              : isCompleted
+                              ? "font-semibold text-[#6b7a8d]"
+                              : "font-medium text-gray-400"
+                          )}>
+                            {sub.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </aside>
+  );
+
+  // ── Step content ──────────────────────────────────────────────────────────────
 
   // ── Top step indicator ────────────────────────────────────────────────────────
 
@@ -339,49 +564,31 @@ export default function OfferForm({
   ];
 
   const stepIndicator = (
-    <div className="w-full px-8 pt-8 pb-4 border-b border-gray-100 flex items-start justify-between">
+    <div className="w-full px-4 sm:px-6 md:px-8 pt-6 md:pt-8 pb-5 flex items-start justify-between relative border-b border-[#e1eaf0]">
+      <div className="absolute top-[46px] md:top-[54px] left-[10%] right-[10%] h-[2px] bg-[#f4f6f8] z-0" />
       {topSections.map((s, i) => {
-        const isLast = i === topSections.length - 1;
         return (
-          <div key={s.label} className="flex flex-1 last:flex-none relative">
-            {/* Step Node */}
-            <div className="flex flex-col items-center gap-2 w-full z-10">
-              {s.status === "done" ? (
-                <div className="w-8 h-8 rounded-full bg-[#00bbea] text-white flex items-center justify-center shrink-0 z-10 relative shadow-sm">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                </div>
-              ) : s.status === "active" ? (
-                <div className="w-8 h-8 rounded-full border border-[#00bbea] flex items-center justify-center shrink-0 z-10 bg-white relative">
-                  <div className="w-3 h-3 rounded-full bg-[#00bbea]" />
-                </div>
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-[#f4f6f8] flex items-center justify-center shrink-0 z-10 relative" />
-              )}
-              
-              <span className={cn(
-                "whitespace-nowrap text-[13px] font-bold transition-colors",
-                s.status === "done" ? "text-[#002147]" :
-                s.status === "active" ? "text-[#00bbea]" : "text-[#9ca3af]"
-              )}>
-                {s.label}
-              </span>
-            </div>
-
-            {/* Connecting Line */}
-            {!isLast && (
-              <div className="absolute top-4 left-1/2 w-full h-[2px] bg-[#e5e7eb] z-0">
-                <div 
-                  className={cn("h-full transition-all duration-500", s.status === "done" ? "bg-[#00bbea]" : "bg-transparent")} 
-                />
+          <div key={s.label} className="flex flex-col items-center gap-2 z-10 flex-1">
+            {s.status === "done" ? (
+              <div className="w-8 h-8 rounded-full bg-[#f4f6f8] flex items-center justify-center shrink-0" />
+            ) : s.status === "active" ? (
+              <div className="w-8 h-8 rounded-full border-[2px] border-[#00bbea] flex items-center justify-center shrink-0 bg-white">
+                <div className="w-3 h-3 rounded-full bg-[#00bbea]" />
               </div>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[#f4f6f8] flex items-center justify-center shrink-0" />
             )}
+            <span className={cn(
+              "text-center leading-tight text-[12px] font-black transition-colors",
+              s.status === "active" ? "text-[#00bbea]" : "text-[#9ca3af]"
+            )}>
+              {s.num}. {s.label}
+            </span>
           </div>
         );
       })}
     </div>
   );
-
-  // ── Step content ──────────────────────────────────────────────────────────────
 
   const renderStep = () => {
     switch (currentStep.id) {
@@ -398,26 +605,163 @@ export default function OfferForm({
             
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {(
-                  [
-                    { key: "year", placeholder: "Year" },
-                    { key: "make", placeholder: "Make" },
-                    { key: "model", placeholder: "Model" },
-                  ] as { key: keyof FormData; placeholder: string }[]
-                ).map(({ key, placeholder }) => (
-                  <div key={key} className="space-y-1.5">
-                    <label className="block text-xs font-black text-[#002147] tracking-tight">
-                      {placeholder}
-                    </label>
+                
+                {/* Year Dropdown */}
+                <div className="custom-dropdown relative w-full space-y-1.5">
+                  <label className="block text-xs font-black text-[#002147] tracking-tight">Year</label>
+                  <div className="w-full h-[48px] flex items-center justify-between px-4 bg-white border border-gray-300 transition-all focus-within:ring-2 focus-within:ring-[#00bbea] rounded-xl">
                     <input
                       type="text"
-                      placeholder={placeholder}
-                      value={form[key] as string}
-                      onChange={(e) => update(key, e.target.value)}
-                      className="w-full h-[48px] border border-gray-300 rounded-full px-4 text-sm font-bold text-[#002147] focus:outline-none focus:ring-2 focus:ring-[#00bbea] placeholder-gray-400"
+                      value={yearSearch}
+                      onChange={(e) => {
+                        setYearSearch(e.target.value);
+                        setOpenDropdown("year");
+                      }}
+                      onFocus={(e) => {
+                        setOpenDropdown("year");
+                        e.target.select();
+                      }}
+                      onBlur={() => handleBlur("year")}
+                      onKeyDown={(e) => handleKeyDown(e, "year", filteredYears, (val) => update("year", val))}
+                      placeholder="Year"
+                      className="w-full text-sm font-bold text-left text-[#002147] outline-none bg-transparent placeholder-gray-400"
                     />
+                    <svg
+                      onClick={() => setOpenDropdown(openDropdown === "year" ? null : "year")}
+                      className={cn("w-4 h-4 text-[#002147]/60 transition-transform duration-200 cursor-pointer", openDropdown === "year" ? "transform rotate-180" : "")}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
-                ))}
+                  {openDropdown === "year" && (
+                    <div className="absolute z-[9999] w-full mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto scroll-smooth scrollbar-light">
+                      {filteredYears.length > 0 ? (
+                        filteredYears.map((y, idx) => (
+                          <button
+                            key={y} id={`year-opt-${idx}`} type="button"
+                            onMouseDown={() => { update("year", y); setOpenDropdown(null); }}
+                            className={cn(
+                              "w-full text-left px-5 py-3 text-sm text-[#002147] font-semibold transition-colors border-b border-gray-50 last:border-b-0",
+                              idx === activeOptionIndex ? "bg-[#deeeff]" : "hover:bg-gray-50"
+                            )}
+                          >
+                            {y}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-5 py-3 text-sm font-medium text-gray-400">No years found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Make Dropdown */}
+                <div className="custom-dropdown relative w-full space-y-1.5">
+                  <label className="block text-xs font-black text-[#002147] tracking-tight">Make</label>
+                  <div className="w-full h-[48px] flex items-center justify-between px-4 bg-white border border-gray-300 transition-all focus-within:ring-2 focus-within:ring-[#00bbea] rounded-xl">
+                    <input
+                      type="text"
+                      value={makeSearch}
+                      onChange={(e) => {
+                        setMakeSearch(e.target.value);
+                        setOpenDropdown("make");
+                      }}
+                      onFocus={(e) => {
+                        setOpenDropdown("make");
+                        e.target.select();
+                      }}
+                      onBlur={() => handleBlur("make")}
+                      onKeyDown={(e) => handleKeyDown(e, "make", filteredMakes, (val) => handleMakeChange(val))}
+                      placeholder="Make"
+                      className="w-full text-sm font-bold text-left text-[#002147] outline-none bg-transparent placeholder-gray-400"
+                    />
+                    <svg
+                      onClick={() => setOpenDropdown(openDropdown === "make" ? null : "make")}
+                      className={cn("w-4 h-4 text-[#002147]/60 transition-transform duration-200 cursor-pointer", openDropdown === "make" ? "transform rotate-180" : "")}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  {openDropdown === "make" && (
+                    <div className="absolute z-[9999] w-full mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto scroll-smooth scrollbar-light">
+                      {filteredMakes.length > 0 ? (
+                        filteredMakes.map((m, idx) => (
+                          <button
+                            key={m} id={`make-opt-${idx}`} type="button"
+                            onMouseDown={() => { handleMakeChange(m); setOpenDropdown(null); }}
+                            className={cn(
+                              "w-full text-left px-5 py-3 text-sm text-[#002147] font-semibold transition-colors border-b border-gray-50 last:border-b-0",
+                              idx === activeOptionIndex ? "bg-[#deeeff]" : "hover:bg-gray-50"
+                            )}
+                          >
+                            {m}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-5 py-3 text-sm font-medium text-gray-400">No makes found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Model Dropdown */}
+                <div className="custom-dropdown relative w-full space-y-1.5">
+                  <label className="block text-xs font-black text-[#002147] tracking-tight">Model</label>
+                  <div className={cn(
+                    "w-full h-[48px] flex items-center justify-between px-4 bg-white border border-gray-300 transition-all rounded-xl",
+                    !form.make ? "opacity-50 cursor-not-allowed bg-gray-50" : "focus-within:ring-2 focus-within:ring-[#00bbea]"
+                  )}>
+                    <input
+                      type="text"
+                      value={modelSearch}
+                      onChange={(e) => {
+                        setModelSearch(e.target.value);
+                        setOpenDropdown("model");
+                      }}
+                      onFocus={(e) => {
+                        if (form.make) {
+                          setOpenDropdown("model");
+                          e.target.select();
+                        }
+                      }}
+                      onBlur={() => handleBlur("model")}
+                      onKeyDown={(e) => handleKeyDown(e, "model", filteredModels, (val) => update("model", val))}
+                      placeholder="Model"
+                      disabled={!form.make}
+                      className="w-full text-sm font-bold text-left text-[#002147] outline-none bg-transparent placeholder-gray-400 disabled:cursor-not-allowed"
+                    />
+                    <svg
+                      onClick={() => { if (form.make) setOpenDropdown(openDropdown === "model" ? null : "model") }}
+                      className={cn("w-4 h-4 text-[#002147]/60 transition-transform duration-200", form.make ? "cursor-pointer" : "opacity-50", openDropdown === "model" ? "transform rotate-180" : "")}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  {openDropdown === "model" && form.make && (
+                    <div className="absolute z-[9999] w-full mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto scroll-smooth scrollbar-light">
+                      {filteredModels.length > 0 ? (
+                        filteredModels.map((m, idx) => (
+                          <button
+                            key={m} id={`model-opt-${idx}`} type="button"
+                            onMouseDown={() => { update("model", m); setOpenDropdown(null); }}
+                            className={cn(
+                              "w-full text-left px-5 py-3 text-sm text-[#002147] font-semibold transition-colors border-b border-gray-50 last:border-b-0",
+                              idx === activeOptionIndex ? "bg-[#deeeff]" : "hover:bg-gray-50"
+                            )}
+                          >
+                            {m}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-5 py-3 text-sm font-medium text-gray-400">No models found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
             
@@ -487,32 +831,50 @@ export default function OfferForm({
               <label className="block text-xs font-black text-[#002147] tracking-tight">
                 Trim
               </label>
-              <div className="relative">
-                <div
-                  onClick={() => setTrimDropdownOpen(!trimDropdownOpen)}
-                  className="w-full h-[48px] border border-gray-300 rounded-full px-4 pr-10 flex items-center justify-between text-sm font-bold text-[#002147] cursor-pointer bg-white"
-                >
-                  <span className={form.trim ? "text-[#002147]" : "text-gray-400 font-medium"}>
-                    {form.trim || "- Select -"}
-                  </span>
-                  <svg className={`w-4 h-4 text-gray-500 transition-transform ${trimDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              <div className="custom-dropdown relative w-full space-y-1.5">
+                <div className="w-full h-[48px] flex items-center justify-between px-4 bg-white border border-gray-300 transition-all focus-within:ring-2 focus-within:ring-[#00bbea] rounded-xl">
+                  <input
+                    type="text"
+                    value={trimSearch}
+                    onChange={(e) => {
+                      setTrimSearch(e.target.value);
+                      setOpenDropdown("trim");
+                    }}
+                    onFocus={(e) => {
+                      setOpenDropdown("trim");
+                      e.target.select();
+                    }}
+                    onBlur={() => handleBlur("trim")}
+                    onKeyDown={(e) => handleKeyDown(e, "trim", filteredTrims, (val) => update("trim", val))}
+                    placeholder="Trim"
+                    className="w-full text-sm font-bold text-left text-[#002147] outline-none bg-transparent placeholder-gray-400"
+                  />
+                  <svg
+                    onClick={() => setOpenDropdown(openDropdown === "trim" ? null : "trim")}
+                    className={cn("w-4 h-4 text-[#002147]/60 transition-transform duration-200 cursor-pointer", openDropdown === "trim" ? "transform rotate-180" : "")}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                  </svg>
                 </div>
-                
-                {trimDropdownOpen && (
-                  <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-60 overflow-y-auto">
-                    <ul className="py-2">
-                      {["Base", "LE", "SE", "XLE", "Sport", "Limited", "LX", "EX", "Touring"].map((opt) => (
-                        <li key={opt}>
-                          <button
-                            type="button"
-                            onMouseDown={() => { update("trim", opt); setTrimDropdownOpen(false); }}
-                            className="w-full text-left px-5 py-3 hover:bg-gray-50 text-sm font-semibold text-[#002147] transition-colors"
-                          >
-                            {opt}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
+                {openDropdown === "trim" && (
+                  <div className="absolute z-[9999] w-full mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto scroll-smooth scrollbar-light">
+                    {filteredTrims.length > 0 ? (
+                      filteredTrims.map((t, idx) => (
+                        <button
+                          key={t} id={`trim-opt-${idx}`} type="button"
+                          onMouseDown={() => { update("trim", t); setOpenDropdown(null); }}
+                          className={cn(
+                            "w-full text-left px-5 py-3 text-sm text-[#002147] font-semibold transition-colors border-b border-gray-50 last:border-b-0",
+                            idx === activeOptionIndex ? "bg-[#deeeff]" : "hover:bg-gray-50"
+                          )}
+                        >
+                          {t}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-5 py-3 text-sm font-medium text-gray-400">No trims found</div>
+                    )}
                   </div>
                 )}
               </div>
@@ -546,7 +908,7 @@ export default function OfferForm({
                   placeholder="87,400"
                   value={form.mileage}
                   onChange={(e) => { update("mileage", e.target.value); setMileageConfirmed(false); }}
-                  className="flex-1 h-[48px] border border-gray-300 rounded-full px-4 text-sm font-bold text-[#002147] focus:outline-none focus:ring-2 focus:ring-[#00bbea] placeholder-gray-400"
+                  className="flex-1 h-[48px] border border-gray-300 rounded-xl px-4 text-sm font-bold text-[#002147] focus:outline-none focus:ring-2 focus:ring-[#00bbea] placeholder-gray-400"
                 />
                 <span className="text-sm font-bold text-[#002147]">miles</span>
               </div>
@@ -977,7 +1339,7 @@ export default function OfferForm({
                     placeholder="Enter your zip code (e.g. 30318)"
                     value={form.zipCode}
                     onChange={(e) => update("zipCode", e.target.value)}
-                    className="w-full h-[48px] border border-gray-300 rounded-full px-4 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#00bbea] placeholder-gray-400"
+                    className="w-full h-[48px] border border-gray-300 rounded-xl px-4 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#00bbea] placeholder-gray-400"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -989,7 +1351,7 @@ export default function OfferForm({
                     placeholder="Email address"
                     value={form.email}
                     onChange={(e) => update("email", e.target.value)}
-                    className="w-full h-[48px] border border-gray-300 rounded-full px-4 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#00bbea] placeholder-gray-400"
+                    className="w-full h-[48px] border border-gray-300 rounded-xl px-4 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#00bbea] placeholder-gray-400"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1001,7 +1363,7 @@ export default function OfferForm({
                     placeholder="Phone number"
                     value={form.phone}
                     onChange={(e) => update("phone", e.target.value)}
-                    className="w-full h-[48px] border border-gray-300 rounded-full px-4 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#00bbea] placeholder-gray-400"
+                    className="w-full h-[48px] border border-gray-300 rounded-xl px-4 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#00bbea] placeholder-gray-400"
                   />
                 </div>
               </div>
@@ -1250,7 +1612,18 @@ export default function OfferForm({
 
   const proceedToNextStep = () => {
     if (stepIndex < STEPS.length - 1) {
-      setStepIndex(stepIndex + 1);
+      const nextStepIndex = stepIndex + 1;
+      const currentSection = STEPS[stepIndex].section;
+      const nextSection = STEPS[nextStepIndex].section;
+      // When moving into a new section, collapse the old one and expand the new
+      if (currentSection !== nextSection) {
+        setExpandedSections((prev) => ({
+          ...prev,
+          [currentSection]: false,
+          [nextSection]: true,
+        }));
+      }
+      setStepIndex(nextStepIndex);
     }
   };
 
@@ -1275,7 +1648,17 @@ export default function OfferForm({
 
   const back = () => {
     if (stepIndex > 0) {
-      setStepIndex(stepIndex - 1);
+      const prevStepIndex = stepIndex - 1;
+      const currentSection = STEPS[stepIndex].section;
+      const prevSection = STEPS[prevStepIndex].section;
+      // When going back into a previous section, expand it
+      if (currentSection !== prevSection) {
+        setExpandedSections((prev) => ({
+          ...prev,
+          [prevSection]: true,
+        }));
+      }
+      setStepIndex(prevStepIndex);
     }
   };
 
@@ -1283,30 +1666,36 @@ export default function OfferForm({
     currentStep.id !== "calculating" && currentStep.id !== "accepted" && currentStep.id !== "offer";
 
   return (
-    <section className="flex-1 bg-[#002147] relative overflow-hidden font-nunito">
-      {/* Background glows — match hero */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#002147] via-[#2e5478]/30 to-[#002147] pointer-events-none" />
-      <div className="hero-glow-cyan absolute top-0 right-[10%] w-[500px] h-[500px] pointer-events-none" />
+    <section className="flex-1 relative overflow-hidden font-nunito bg-gradient-to-br from-[#081729] via-[#05224c] to-[#023579]">
+      {/* Smooth gradient background matching the isolated background reference image */}
 
       <div className="relative max-w-[1080px] mx-auto px-4 sm:px-6 lg:px-8 pt-[100px] pb-10">
-        {/* Back to home link */}
-        <button
-          onClick={onClose}
-          className="flex items-center gap-2 text-white/60 hover:text-white text-sm font-medium mb-6 transition-colors"
-        >
-          <FontAwesomeIcon icon={faChevronLeft} className="w-3 h-3" />
-          Back to home
-        </button>
+        <div className="flex items-center justify-between mb-6">
+          {/* Back to home link */}
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 text-white/60 hover:text-white text-sm font-medium transition-colors"
+          >
+            <FontAwesomeIcon icon={faChevronLeft} className="w-3 h-3" />
+            Back to home
+          </button>
+        </div>
 
-        {/* White card: content */}
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col overflow-hidden h-[650px] font-nunito">
+        {/* White card: sidebar + content */}
+        <div className="bg-white rounded-2xl shadow-2xl w-full flex h-auto md:h-[650px] md:max-h-[650px] font-nunito">
+          
+          {/* Sidebar */}
+          {sidebar}
 
-          {/* Step indicator */}
-          {currentStep.id !== "accepted" && stepIndicator}
+          {/* Main content */}
+          <div className="flex-1 flex flex-col min-w-0">
+
+            {/* Step indicator */}
+            {currentStep.id !== "accepted" && stepIndicator}
 
           {/* Fulfilled Information Box */}
           {fulfilledVehicleSummary && currentStep.id !== "accepted" && (
-            <div className="px-8 pt-6 pb-2">
+            <div className="px-4 sm:px-6 md:px-8 pt-4 md:pt-6 pb-2">
               <div className="bg-[#f4f6f8] border border-[#d8dee6] rounded-xl px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-[#002147] rounded-full flex items-center justify-center">
@@ -1337,21 +1726,22 @@ export default function OfferForm({
             </div>
           )}
 
-          {/* Step body */}
-          <div className="flex-1 px-8 py-6 overflow-y-auto">
+          {/* Step body — scrolls inside fixed-height card, except for vehicle/trim steps to allow dropdowns to break out */}
+          <div className={cn("flex-1 px-4 sm:px-6 md:px-8 py-4 md:py-6 scroll-smooth scrollbar-light", !["vehicle", "trim"].includes(currentStep.id) && "overflow-y-auto")}>
             {renderStep()}
           </div>
 
           {/* Navigation */}
           {showNav && (
-            <div className="px-8 py-5 border-t border-gray-100 flex items-center justify-between gap-3">
-              {/* Restart button — left side */}
+            <div className="px-4 sm:px-6 md:px-8 py-4 md:py-5 border-t border-gray-100 flex items-center justify-between gap-3">
+              {/* Restart */}
               <button
                 onClick={() => {
                   setStepIndex(0);
                   setForm(INITIAL_FORM);
+                  setCalcStage(1);
                 }}
-                className="flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-medium border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors bg-white"
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-300 rounded-full px-5 py-2 transition-colors font-medium"
               >
                 <FontAwesomeIcon icon={faRotate} className="w-3.5 h-3.5" />
                 Restart
@@ -1396,16 +1786,16 @@ export default function OfferForm({
               </button>
             </div>
           )}
+          </div>{/* end main content */}
         </div>{/* end white card */}
-        
 
-        {/* Spanish language toggle */}
-        <div className="mt-6 flex justify-center">
+        {/* Continúa en español — centered below card */}
+        <div className="flex justify-center mt-5">
           <button className="flex items-center gap-2 text-white/60 hover:text-white text-sm font-medium transition-colors">
-            <span className="text-sm rounded overflow-hidden leading-none pt-0.5">🇪🇸</span>
-            <span>Continúa en español</span>
+            🇪🇸 Continúa en español
           </button>
         </div>
+
       </div>{/* end max-w container */}
       {/* Mileage Warning Modal */}
       {mileageWarning && (

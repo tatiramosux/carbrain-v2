@@ -181,12 +181,8 @@ export default function HeroSection({ onGetOffer }: HeroSectionProps) {
 
   return (
     <>
-      <section className="relative bg-[#002147] overflow-hidden font-nunito">
-        {/* Background glows */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#002147] via-[#2e5478]/40 to-[#002147] pointer-events-none" />
-        <div className="hero-glow-cyan absolute top-0 right-[10%] w-[600px] h-[600px] pointer-events-none" />
-        <div className="hero-glow-lime absolute bottom-0 left-[5%] w-[400px] h-[400px] pointer-events-none" />
-
+      <section className="relative overflow-hidden font-nunito bg-gradient-to-br from-[#081729] via-[#05224c] to-[#023579]">
+        {/* Smooth gradient background matching the isolated background reference image */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[180px] pb-[140px]">
           <div className="flex flex-1 flex-col lg:flex-row items-center lg:items-center justify-center gap-8 lg:gap-16 min-h-[600px]">
 

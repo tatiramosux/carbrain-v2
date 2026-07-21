@@ -82,7 +82,7 @@ button {
   transition: clip-path 400ms ease-out;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar — dark (default, used on hero page) */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -92,4 +92,24 @@ button {
 ::-webkit-scrollbar-thumb {
   background: #1e3a5f;
   border-radius: 3px;
+}
+
+/* Light scrollbar — used inside the white offer form card */
+.scrollbar-light::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-light::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-light::-webkit-scrollbar-thumb {
+  background: #d0d7df;
+  border-radius: 4px;
+}
+.scrollbar-light::-webkit-scrollbar-thumb:hover {
+  background: #b0bac6;
+}
+
+/* Smooth scrolling everywhere */
+html {
+  scroll-behavior: smooth;
 }
